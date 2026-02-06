@@ -1,6 +1,10 @@
 """Configuration management for Apprentice MCP Agent."""
 
-from typing import Dict, List, Optional
+import json
+import os
+import re
+from typing import Dict, List, Optional, Any
+from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -12,15 +16,6 @@ class Settings(BaseSettings):
 
     # OpenAI API Key
     openai_api_key: str = Field(..., alias="OPENAI_API_KEY")
-
-    # MCP Server configurations
-    # Format: JSON string with server configs
-    # Example: [{"name": "jira", "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-jira"]}]
-    mcp_servers: str = Field(
-        default='[]',
-        alias="MCP_SERVERS",
-        description="JSON string containing MCP server configurations"
-    )
 
     # GitHub organization (placeholder support)
     github_org: Optional[str] = Field(None, alias="GITHUB_ORG")
@@ -38,13 +33,36 @@ class Settings(BaseSettings):
 
     # LangGraph settings
     max_iterations: int = Field(default=15, alias="MAX_ITERATIONS")
-    
+
     # Logging
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+
+    # MCP config (loaded from mcp_config.json)
+    mcp_config: Dict = Field(default_factory=dict)
 
 
 # Global settings instance
 _settings: Optional[Settings] = None
+
+
+def _substitute_placeholders(config: Any, settings: Settings) -> Any:
+    """Recursively substitute placeholders in the config."""
+    if isinstance(config, dict):
+        return {k: _substitute_placeholders(v, settings) for k, v in config.items()}
+    if isinstance(config, list):
+        return [_substitute_placeholders(i, settings) for i in config]
+    if isinstance(config, str):
+        # Regex to find ${VAR_NAME} placeholders
+        placeholder_pattern = re.compile(r"\$\{(\w+)\}")
+        
+        def replace_match(match):
+            var_name = match.group(1)
+            # Use getattr on the settings object to get the value
+            # The attribute names in Settings are lowercase
+            return getattr(settings, var_name.lower(), f"${{{var_name}}}")
+
+        return placeholder_pattern.sub(replace_match, config)
+    return config
 
 
 def get_settings() -> Settings:
@@ -52,4 +70,12 @@ def get_settings() -> Settings:
     global _settings
     if _settings is None:
         _settings = Settings()
+        # Load mcp_config.json
+        config_path = Path("mcp_config.json")
+        if config_path.exists():
+            with open(config_path, "r") as f:
+                raw_config = json.load(f)
+                _settings.mcp_config = _substitute_placeholders(raw_config, _settings)
+        else:
+            print("Warning: mcp_config.json not found. MCP servers will not be configured.")
     return _settings

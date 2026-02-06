@@ -62,19 +62,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-4. Configure your `.env` file with required credentials:
-```env
-OPENAI_API_KEY=your-openai-api-key
-GITHUB_TOKEN=your-github-token
-JIRA_URL=https://your-instance.atlassian.net
-JIRA_USERNAME=your-email@example.com
-JIRA_API_TOKEN=your-jira-api-token
-GITHUB_ORG=your-org
-GITHUB_ASSIGNEE=your-username
-
-# Configure MCP servers (JSON array)
-MCP_SERVERS=[{"name":"jira","type":"stdio","command":"npx","args":["-y","@modelcontextprotocol/server-jira"]},{"name":"github","type":"stdio","command":"npx","args":["-y","@modelcontextprotocol/server-github"]}]
-```
+4. Configure your `.env` file with your secrets. See the "Configuration" section for more details.
 
 ## Usage
 
@@ -130,49 +118,27 @@ cd package && zip -r ../deployment.zip . && cd ..
 
 ## Configuration
 
+The application is configured through a combination of `mcp_config.json` and a `.env` file.
+
+- **`mcp_config.json`**: This file contains non-secret configuration and is checked into version control. It uses placeholders in the format `${VAR_NAME}` to refer to secrets that are loaded from the environment.
+- **`.env`**: This file is used for storing secrets and local environment-specific variables. It is not checked into version control. You can create one by copying the `.env.example` file.
+
 ### Environment Variables
+
+The following variables must be defined in your `.env` file:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | OpenAI API key for GPT models |
-| `MCP_SERVERS` | Yes | JSON array of MCP server configurations |
-| `GITHUB_TOKEN` | No | GitHub personal access token |
-| `GITHUB_ORG` | No | Default GitHub organization |
-| `GITHUB_ASSIGNEE` | No | Default assignee for GitHub issues |
-| `JIRA_URL` | No | Jira instance URL |
-| `JIRA_USERNAME` | No | Jira username/email |
-| `JIRA_API_TOKEN` | No | Jira API token |
+| `OPENAI_API_KEY` | Yes | Your OpenAI API key. |
+| `GITHUB_TOKEN` | Yes | Your GitHub personal access token. |
+| `GITHUB_ORG`| Yes | The GitHub organization to create issues in. |
+| `GITHUB_ASSIGNEE`| No | The GitHub username to assign issues to. |
+| `JIRA_URL` | Yes | The URL of your Jira instance. |
+| `JIRA_USERNAME` | Yes | Your Jira username or email. |
+| `JIRA_API_TOKEN` | Yes | Your Jira API token. |
 | `MAX_ITERATIONS` | No | Max agent iterations (default: 15) |
 | `LOG_LEVEL` | No | Logging level (default: INFO) |
 
-### MCP Server Configuration
-
-MCP servers are configured via the `MCP_SERVERS` environment variable as a JSON array:
-
-```json
-[
-  {
-    "name": "jira",
-    "type": "stdio",
-    "command": "npx",
-    "args": ["-y", "@modelcontextprotocol/server-jira"],
-    "env": {
-      "JIRA_URL": "https://your-instance.atlassian.net",
-      "JIRA_USERNAME": "your-email@example.com",
-      "JIRA_API_TOKEN": "your-token"
-    }
-  },
-  {
-    "name": "github",
-    "type": "stdio",
-    "command": "npx",
-    "args": ["-y", "@modelcontextprotocol/server-github"],
-    "env": {
-      "GITHUB_TOKEN": "your-token"
-    }
-  }
-]
-```
 
 ## Development
 
@@ -213,6 +179,7 @@ custom-mcp-client/
 │   ├── test_agent.py
 │   └── test_main.py
 ├── .env.example             # Example environment configuration
+├── mcp_config.json          # MCP server configuration
 ├── .gitignore              # Git ignore rules
 ├── requirements.txt        # Python dependencies
 ├── requirements-dev.txt    # Python development dependencies
