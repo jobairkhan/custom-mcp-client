@@ -11,25 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 class MultiServerMCPClient:
-    """
-    Client for managing connections to multiple MCP servers.
-    
-    Supports both stdio and HTTP transport protocols.
-    Dynamically loads tools from all connected servers.
-    """
+    """Connects to MCP servers and loads tools dynamically."""
 
     def __init__(self, server_configs: List[Dict[str, Any]]):
-        """
-        Initialize the multi-server MCP client.
-        
-        Args:
-            server_configs: List of server configuration dictionaries
-                Each config should have:
-                - name: Server identifier
-                - type: "stdio" or "http"
-                - For stdio: command, args, env (optional)
-                - For http: url, headers (optional)
-        """
+        """Initialize MCP client with server configurations."""
         self.server_configs = server_configs
         self.sessions: Dict[str, ClientSession] = {}
         self.tools: Dict[str, Any] = {}
@@ -45,26 +30,18 @@ class MultiServerMCPClient:
                 # Continue with other servers even if one fails
 
     async def _connect_server(self, config: Dict[str, Any]) -> None:
-        """
-        Connect to a single MCP server.
-        
-        Args:
-            config: Server configuration dictionary
-        """
+        """Connect to a single MCP server."""
         server_name = config.get("name", "unknown")
         server_type = config.get("type", "stdio")
 
-        logger.info(f"Connecting to MCP server: {server_name} ({server_type})")
+        if server_type != "stdio":
+            raise ValueError(f"Only stdio servers supported, got: {server_type}")
 
-        if server_type == "stdio":
-            await self._connect_stdio_server(server_name, config)
-        elif server_type == "http":
-            await self._connect_http_server(server_name, config)
-        else:
-            raise ValueError(f"Unsupported server type: {server_type}")
+        logger.info(f"Connecting to {server_name}")
+        await self._connect_stdio_server(server_name, config)
 
     async def _connect_stdio_server(self, name: str, config: Dict[str, Any]) -> None:
-        """Connect to an stdio-based MCP server."""
+        """Connect to stdio MCP server."""
         command = config.get("command")
         args = config.get("args", [])
         env = config.get("env")
@@ -94,20 +71,10 @@ class MultiServerMCPClient:
         # Load tools from this server
         await self._load_tools_from_session(name, session)
 
-    async def _connect_http_server(self, name: str, config: Dict[str, Any]) -> None:
-        """Connect to an HTTP-based MCP server."""
-        # HTTP client support - to be implemented
-        # For now, raise not implemented
-        raise NotImplementedError("HTTP MCP servers not yet implemented")
+
 
     async def _load_tools_from_session(self, server_name: str, session: ClientSession) -> None:
-        """
-        Load all tools from a connected session.
-        
-        Args:
-            server_name: Name of the server
-            session: Active MCP client session
-        """
+        """Load tools from connected session."""
         try:
             # List available tools
             tools_result = await session.list_tools()
@@ -128,16 +95,7 @@ class MultiServerMCPClient:
             logger.error(f"Failed to load tools from {server_name}: {e}")
 
     async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
-        """
-        Call a tool on the appropriate MCP server.
-        
-        Args:
-            tool_name: Full tool name (server.tool_name)
-            arguments: Tool arguments
-            
-        Returns:
-            Tool execution result
-        """
+        """Call a tool on the appropriate MCP server."""
         if tool_name not in self.tools:
             raise ValueError(f"Tool not found: {tool_name}")
 
@@ -155,12 +113,7 @@ class MultiServerMCPClient:
             raise
 
     def get_all_tools(self) -> Dict[str, Any]:
-        """
-        Get all available tools from all servers.
-        
-        Returns:
-            Dictionary of all loaded tools
-        """
+        """Get all loaded tools from servers."""
         return self.tools
 
     async def cleanup(self) -> None:
@@ -184,15 +137,7 @@ class MultiServerMCPClient:
 
 
 def parse_mcp_servers_config(config_string: str) -> List[Dict[str, Any]]:
-    """
-    Parse MCP servers configuration from JSON string.
-    
-    Args:
-        config_string: JSON string containing server configurations
-        
-    Returns:
-        List of server configuration dictionaries
-    """
+    """Parse MCP servers configuration from JSON string."""
     try:
         return json.loads(config_string)
     except json.JSONDecodeError as e:
