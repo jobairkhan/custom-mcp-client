@@ -25,7 +25,7 @@ pip install --upgrade pip
 
 # Install dependencies
 echo "Installing dependencies..."
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 # Create .env file if it doesn't exist
 if [ ! -f ".env" ]; then

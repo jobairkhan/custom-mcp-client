@@ -176,6 +176,14 @@ MCP servers are configured via the `MCP_SERVERS` environment variable as a JSON 
 
 ## Development
 
+### Setup
+
+For development, install all dependencies (including testing and linting tools) from `requirements-dev.txt`:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
 ### Running Tests
 
 ```bash
@@ -207,6 +215,7 @@ custom-mcp-client/
 ├── .env.example             # Example environment configuration
 ├── .gitignore              # Git ignore rules
 ├── requirements.txt        # Python dependencies
+├── requirements-dev.txt    # Python development dependencies
 ├── LICENSE                 # MIT License
 └── README.md              # This file
 ```
