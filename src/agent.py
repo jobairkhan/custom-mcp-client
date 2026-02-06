@@ -134,6 +134,12 @@ Your goal is to:
 2. Extract relevant information (title, description, labels, etc.)
 3. Create a corresponding GitHub issue with the extracted information
 4. Link back to the original Jira issue if needed
+5. Keep the user informed of your actions and any issues you encounter along the way.
+6. Keep the comments sync between Jira and GitHub issues until the Jira issue is closed.
+7. If the Jira issue is closed, close the GitHub issue as well.
+8. If the description is changed in Jira, update the GitHub issue description accordingly.
+9. If there is any video or image attachments in Jira, download them and upload to GitHub issue.
+10. Add the PR link to the Jira issue when the PR is created.
 
 Use the available MCP tools to interact with Jira and GitHub.
 Be concise and efficient in your actions.
