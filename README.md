@@ -1,4 +1,4 @@
-# Apprentice MCP Agent
+# Custom MCP Client
 
 A LangGraph-based ReAct agent that automates Jira to GitHub issue migration using Model Context Protocol (MCP) servers.
 
