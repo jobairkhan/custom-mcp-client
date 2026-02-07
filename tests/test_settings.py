@@ -13,14 +13,12 @@ class TestSettings:
     def test_settings_from_env(self, monkeypatch):
         """Test settings load from environment variables."""
         monkeypatch.setenv("OPENAI_API_KEY", "test-key-123")
-        monkeypatch.setenv("MCP_SERVERS", '[{"name":"test","type":"stdio"}]')
         monkeypatch.setenv("GITHUB_ORG", "test-org")
         monkeypatch.setenv("MAX_ITERATIONS", "20")
         
         settings = Settings()
         
         assert settings.openai_api_key == "test-key-123"
-        assert settings.mcp_servers == '[{"name":"test","type":"stdio"}]'
         assert settings.github_org == "test-org"
         assert settings.max_iterations == 20
 
@@ -32,7 +30,6 @@ class TestSettings:
         
         assert settings.max_iterations == 15
         assert settings.log_level == "INFO"
-        assert settings.mcp_servers == "[]"
 
     def test_get_settings_singleton(self, monkeypatch):
         """Test that get_settings returns a singleton."""

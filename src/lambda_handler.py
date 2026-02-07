@@ -21,17 +21,19 @@ async def execute_agent(jira_key: str, verbose: bool = False) -> Dict[str, Any]:
         if not settings.mcp_config:
             raise ValueError("No MCP servers configured")
         
-        servers = settings.mcp_config.get("servers", [])
-        if not servers:
+        # Config is now a dict, not a list with "servers" key
+        connections = settings.mcp_config
+        if not connections:
             raise ValueError("No servers in mcp_config")
         
-        mcp_client = MultiServerMCPClient(servers)
+        mcp_client = MultiServerMCPClient(connections)
         try:
-            await mcp_client.connect_all()
-            if not mcp_client.get_all_tools():
+            # Load all tools using persistent sessions
+            tools = await mcp_client.load_tools()
+            if not tools:
                 raise ValueError("No tools loaded from servers")
             
-            agent = ApprenticeAgent(mcp_client)
+            agent = ApprenticeAgent(mcp_client, tools)
             return await agent.run(jira_key)
         finally:
             await mcp_client.cleanup()

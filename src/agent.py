@@ -1,16 +1,14 @@
 """LangGraph ReAct agent for Jira→GitHub workflow automation."""
 
 import logging
-from typing import Any, Dict, List, Optional, TypedDict, Annotated, Sequence
+from typing import Any, Dict, List, TypedDict, Annotated, Sequence, Literal
 import operator
 
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolNode
-from langchain_core.tools import BaseTool, tool as langchain_tool
-from pydantic import BaseModel, Field, ConfigDict
+from langchain_core.tools import BaseTool
 
 from src.mcp_client import MultiServerMCPClient
 from src.settings import get_settings
@@ -25,54 +23,65 @@ class AgentState(TypedDict):
     iterations: int
 
 
-class MCPToolWrapper(BaseTool):
+async def execute_tools(state: AgentState, tools: List[BaseTool]) -> Dict[str, Any]:
+    """Execute tools based on the last message's tool calls.
+    
+    Custom implementation to replace ToolNode from langgraph.prebuilt.
     """
-    Wrapper to convert MCP tools to LangChain tools.
+    messages = state["messages"]
+    last_message = messages[-1]
     
-    This allows MCP tools to be used directly with LangGraph without manual wrappers.
-    """
+    tool_messages = []
     
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+        # Create a mapping of tool names to tools
+        tools_by_name = {tool.name: tool for tool in tools}
+        
+        for tool_call in last_message.tool_calls:
+            tool_name = tool_call["name"]
+            tool_args = tool_call.get("args", {})
+            tool_call_id = tool_call.get("id", "")
+            
+            logger.info(f"Executing tool: {tool_name} with args: {tool_args}")
+            
+            if tool_name in tools_by_name:
+                try:
+                    # Execute the tool
+                    result = await tools_by_name[tool_name].ainvoke(tool_args)
+                    
+                    # Format result as string if needed
+                    if isinstance(result, list):
+                        content = str(result)
+                    else:
+                        content = str(result)
+                    
+                    tool_messages.append(
+                        ToolMessage(
+                            content=content,
+                            tool_call_id=tool_call_id,
+                            name=tool_name
+                        )
+                    )
+                except Exception as e:
+                    logger.error(f"Error executing tool {tool_name}: {e}")
+                    tool_messages.append(
+                        ToolMessage(
+                            content=f"Error: {str(e)}",
+                            tool_call_id=tool_call_id,
+                            name=tool_name
+                        )
+                    )
+            else:
+                logger.error(f"Tool not found: {tool_name}")
+                tool_messages.append(
+                    ToolMessage(
+                        content=f"Error: Tool {tool_name} not found",
+                        tool_call_id=tool_call_id,
+                        name=tool_name
+                    )
+                )
     
-    mcp_client: Any = Field(exclude=True)  # Exclude from Pydantic validation
-    tool_name: str = Field(exclude=True)
-    tool_description: str = Field(exclude=True)
-    tool_schema: Dict[str, Any] = Field(exclude=True)
-    
-    name: str = ""
-    description: str = ""
-    
-    def __init__(self, mcp_client: MultiServerMCPClient, tool_name: str, 
-                 tool_description: str, tool_schema: Dict[str, Any]):
-        """Initialize the MCP tool wrapper."""
-        # Initialize parent class first
-        super().__init__(
-            name=tool_name.replace(".", "_"),  # Replace dots for LangChain compatibility
-            description=tool_description or "MCP Tool",
-            mcp_client=mcp_client,
-            tool_name=tool_name,
-            tool_description=tool_description,
-            tool_schema=tool_schema
-        )
-
-    def _run(self, **kwargs: Any) -> str:
-        """Synchronous run - not supported for async MCP tools."""
-        raise NotImplementedError("Use async version (_arun)")
-
-    async def _arun(self, **kwargs: Any) -> str:
-        """Execute the MCP tool asynchronously."""
-        try:
-            result = await self.mcp_client.call_tool(self.tool_name, kwargs)
-            # Format the result as a string
-            if hasattr(result, 'content'):
-                if isinstance(result.content, list):
-                    return "\n".join([str(item.text) if hasattr(item, 'text') else str(item) 
-                                    for item in result.content])
-                return str(result.content)
-            return str(result)
-        except Exception as e:
-            logger.error(f"Error executing MCP tool {self.tool_name}: {e}")
-            return f"Error: {str(e)}"
+    return {"messages": tool_messages}
 
 
 class ApprenticeAgent:
@@ -83,14 +92,16 @@ class ApprenticeAgent:
     automating the process of migrating issues from Jira to GitHub.
     """
 
-    def __init__(self, mcp_client: MultiServerMCPClient):
+    def __init__(self, mcp_client: MultiServerMCPClient, tools: List[BaseTool]):
         """
         Initialize the Apprentice agent.
         
         Args:
-            mcp_client: Connected MultiServerMCPClient instance
+            mcp_client: MultiServerMCPClient instance (for reference)
+            tools: List of LangChain BaseTool instances from MCP servers
         """
         self.mcp_client = mcp_client
+        self.tools = tools
         self.settings = get_settings()
         
         # Initialize LLM
@@ -100,27 +111,10 @@ class ApprenticeAgent:
             api_key=self.settings.openai_api_key
         )
         
-        # Create tools from MCP client
-        self.tools = self._create_langchain_tools()
+        logger.info(f"Initialized agent with {len(self.tools)} tool(s)")
         
         # Create the agent graph
         self.graph = self._create_graph()
-
-    def _create_langchain_tools(self) -> List[BaseTool]:
-        """Convert MCP tools to LangChain tools dynamically."""
-        langchain_tools = []
-        
-        for tool_name, tool_info in self.mcp_client.get_all_tools().items():
-            wrapper = MCPToolWrapper(
-                mcp_client=self.mcp_client,
-                tool_name=tool_name,
-                tool_description=tool_info.get("description", ""),
-                tool_schema=tool_info.get("inputSchema", {})
-            )
-            langchain_tools.append(wrapper)
-        
-        logger.info(f"Created {len(langchain_tools)} LangChain tools from MCP servers")
-        return langchain_tools
 
     def _create_graph(self) -> StateGraph:
         """Create the LangGraph ReAct workflow."""
@@ -183,8 +177,13 @@ Default Assignee: {github_assignee}
                 "iterations": iterations + 1
             }
         
+        # Define the tool execution node
+        async def tools_node(state: AgentState) -> AgentState:
+            """Execute tools based on the agent's tool calls."""
+            return await execute_tools(state, self.tools)
+        
         # Define the routing function
-        def should_continue(state: AgentState) -> str:
+        def should_continue(state: AgentState) -> Literal["continue", "end"]:
             """Determine if we should continue or end."""
             messages = state["messages"]
             last_message = messages[-1]
@@ -201,7 +200,7 @@ Default Assignee: {github_assignee}
         
         # Add nodes
         workflow.add_node("agent", agent_node)
-        workflow.add_node("tools", ToolNode(self.tools))
+        workflow.add_node("tools", tools_node)
         
         # Set entry point
         workflow.set_entry_point("agent")

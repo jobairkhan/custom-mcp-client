@@ -53,5 +53,6 @@ def get_settings() -> Settings:
                 # Substitute placeholders with environment variables
                 env_dict = {k: str(getattr(_settings, k.lower(), os.environ.get(k, ""))) 
                            for k in os.environ.keys()}
+                # Config is already in the correct format for langchain-mcp-adapters
                 _settings.mcp_config = _substitute_placeholders(raw_config, env_dict)
     return _settings

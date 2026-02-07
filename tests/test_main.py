@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import json
 
-from src.main import format_output, main_async
+from src.main import format_output
 
 
 class TestFormatOutput:
@@ -18,7 +18,7 @@ class TestFormatOutput:
             "iterations": 5
         }
         
-        output = format_output(result, json_output=True)
+        output = format_output(result, as_json=True)
         parsed = json.loads(output)
         
         assert parsed["success"] is True
@@ -33,7 +33,7 @@ class TestFormatOutput:
             "messages": []
         }
         
-        output = format_output(result, json_output=False)
+        output = format_output(result, as_json=False)
         
         assert "PROJ-123" in output
         assert "Success: True" in output
@@ -47,7 +47,7 @@ class TestFormatOutput:
             "error": "Connection failed"
         }
         
-        output = format_output(result, json_output=True)
+        output = format_output(result, as_json=True)
         parsed = json.loads(output)
         
         assert parsed["success"] is False
@@ -61,39 +61,8 @@ class TestFormatOutput:
             "error": "Connection failed"
         }
         
-        output = format_output(result, json_output=False)
+        output = format_output(result, as_json=False)
         
         assert "PROJ-123" in output
         assert "Success: False" in output
         assert "Connection failed" in output
-
-
-class TestMainAsync:
-    """Test suite for main async function."""
-
-    @pytest.mark.asyncio
-    async def test_main_async_no_servers(self):
-        """Test main async with no MCP servers configured."""
-        with patch("src.main.get_settings") as mock_settings:
-            mock_instance = MagicMock()
-            mock_instance.mcp_servers = "[]"
-            mock_instance.log_level = "INFO"
-            mock_settings.return_value = mock_instance
-            
-            result = await main_async("PROJ-123")
-            
-            assert result["success"] is False
-            assert "No MCP servers configured" in result["error"]
-
-    @pytest.mark.asyncio
-    async def test_main_async_invalid_json(self):
-        """Test main async with invalid MCP servers JSON."""
-        with patch("src.main.get_settings") as mock_settings:
-            mock_instance = MagicMock()
-            mock_instance.mcp_servers = "invalid json"
-            mock_instance.log_level = "INFO"
-            mock_settings.return_value = mock_instance
-            
-            result = await main_async("PROJ-123")
-            
-            assert result["success"] is False

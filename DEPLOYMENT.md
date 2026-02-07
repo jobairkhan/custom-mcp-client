@@ -6,30 +6,11 @@ This guide provides instructions for deploying the Apprentice MCP Agent to AWS L
 
 This section describes how to set up a continuous deployment pipeline using GitHub Actions.
 
-### Prerequisites
-
-- AWS credentials with permissions to create and manage Lambda functions and IAM roles.
-- The following secrets configured in your GitHub repository:
-  - `AWS_ACCESS_KEY_ID`
-  - `AWS_SECRET_ACCESS_KEY`
-  - `AWS_REGION`
-
-### Workflow
-
-A deployment workflow file (e.g., `.github/workflows/ci.yml`) would automate the deployment process. This workflow would be triggered on pushes to the `main` branch.
-
-Here's a conceptual overview of the workflow:
-
-1.  **Checkout Code**: The workflow checks out the repository's code.
-2.  **Configure AWS Credentials**: The workflow uses the `aws-actions/configure-aws-credentials` action to authenticate with AWS.
-3.  **Build the Deployment Package**: The workflow runs a script to create the `lambda_bundle.zip` file.
-4.  **Deploy to Lambda**: The workflow uses the `aws lambda update-function-code` command to upload the zip file to AWS Lambda.
-
 ### Continuous Integration with `ci.yml`
 
 The `ci.yml` workflow, located at `.github/workflows/ci.yml`, is responsible for running tests and linting against the codebase. It is triggered on every push and pull request to the `main` and `develop` branches, ensuring code quality and consistency.
 
-## Alternative - Creating the Lambda Deployment Package
+## Creating the Lambda Deployment Package - not CD
 
 When deploying to AWS Lambda, it's important to ensure that the deployment package (the zip file) contains binaries that are compatible with the Lambda runtime environment (which is based on Linux). If you are developing on a non-Linux machine (like Windows or macOS), you need to build the deployment package inside a Linux environment. Docker is a great tool for this.
 

@@ -4,7 +4,7 @@ import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.lambda_handler import lambda_handler, process_jira_issue
+from src.lambda_handler import lambda_handler, execute_agent
 
 
 class TestLambdaHandler:
@@ -56,7 +56,7 @@ class TestLambdaHandler:
         assert response["statusCode"] == 400
         body = json.loads(response["body"])
         assert body["success"] is False
-        assert "Missing required parameter" in body["error"]
+        assert "Missing jira_key" in body["error"]
 
     def test_lambda_handler_error(self):
         """Test Lambda handler with processing error."""
@@ -88,32 +88,3 @@ class TestLambdaHandler:
             assert response["statusCode"] == 500
             body = json.loads(response["body"])
             assert body["success"] is False
-
-
-class TestProcessJiraIssue:
-    """Test suite for process_jira_issue function."""
-
-    @pytest.mark.asyncio
-    async def test_process_jira_issue_no_servers(self):
-        """Test processing with no MCP servers configured."""
-        with patch("src.lambda_handler.get_settings") as mock_settings:
-            mock_settings.return_value.mcp_servers = "[]"
-            
-            result = await process_jira_issue("PROJ-123")
-            
-            assert result["success"] is False
-            assert "No MCP servers configured" in result["error"]
-
-    @pytest.mark.asyncio
-    async def test_process_jira_issue_exception(self):
-        """Test processing with exception."""
-        with patch("src.lambda_handler.get_settings") as mock_settings:
-            mock_settings.return_value.mcp_servers = '[{"name":"test"}]'
-            
-            with patch("src.lambda_handler.MultiServerMCPClient") as mock_client_class:
-                mock_client_class.side_effect = Exception("Connection error")
-                
-                result = await process_jira_issue("PROJ-123")
-                
-                assert result["success"] is False
-                assert "Connection error" in result["error"]
