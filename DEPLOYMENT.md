@@ -18,10 +18,10 @@ The following PowerShell command uses a Docker container to build a Lambda-compa
 
 ```powershell
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
-docker run --rm -v ${PWD}:/app -w /app python:3.10-slim bash -c "apt-get update >/dev/null && apt-get install -y zip >/dev/null && rm -rf build && mkdir -p build dist && python -m pip install -r requirements.txt -t build && cp -r src build/ && cd build && zip -r ../dist/lambda_bundle-$stamp.zip ."
+docker run --rm -v ${PWD}:/app -w /app python:3.13-slim bash -c "apt-get update >/dev/null && apt-get install -y zip >/dev/null && rm -rf build && mkdir -p build dist && python -m pip install -r requirements.txt -t build && cp -r src build/ && cd build && zip -r ../dist/lambda_bundle-$stamp.zip ."
 ```
 
-> **Note**: The command uses the `python:3.10-slim` Docker image to match the Python version of the project. If you are using a different Python version, update the image tag accordingly.
+> **Note**: The command uses the `python:3.13-slim` Docker image to match the Python version of the project. If you are using a different Python version, update the image tag accordingly.
 
 This command will produce a file named `lambda_bundle-<timestamp>.zip` in the `dist` directory. This is the file you will upload to AWS Lambda.
 
@@ -40,7 +40,7 @@ This section provides a step-by-step guide on how to deploy the `lambda_bundle.z
 2.  Click **Create function**.
 3.  Select **Author from scratch**.
 4.  For **Function name**, enter `apprentice-mcp-agent`.
-5.  For **Runtime**, select **Python 3.10**.
+5.  For **Runtime**, select **Python 3.13**.
 6.  For **Architecture**, select **x86_64**.
 7.  Under **Permissions**, create a new execution role with basic Lambda permissions or use an existing one.
 8.  Click **Create function**.

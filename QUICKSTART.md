@@ -7,7 +7,7 @@ The Apprentice MCP Agent is an intelligent automation tool that uses AI (via Ope
 ## Quick Setup (5 minutes)
 
 ### 1. Prerequisites
-- Python 3.10 or higher
+- Python 3.13 or higher
 - Node.js 18+ (for MCP servers)
 - OpenAI API key
 - GitHub personal access token

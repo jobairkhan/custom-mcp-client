@@ -40,7 +40,7 @@ A LangGraph-based ReAct agent that automates Jira to GitHub issue migration usin
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.13+
 - Node.js 18+ (for MCP servers)
 - OpenAI API key
 
@@ -110,7 +110,7 @@ cp -r src package/
 cd package && zip -r ../deployment.zip . && cd ..
 ```
 
-2. Create Lambda function with Python 3.10+ runtime
+2. Create Lambda function with Python 3.13+ runtime
 3. Set handler to `src.lambda_handler.lambda_handler`
 4. Configure environment variables from `.env`
 5. Increase timeout (recommended: 5 minutes)
