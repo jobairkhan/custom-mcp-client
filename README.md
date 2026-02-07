@@ -47,17 +47,20 @@ A LangGraph-based ReAct agent that automates Jira to GitHub issue migration usin
 ### Setup
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/jobairkhan/custom-mcp-client.git
 cd custom-mcp-client
 ```
 
 2. Install Python dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. Create a `.env` file from the example:
+
 ```bash
 cp .env.example .env
 ```
@@ -69,16 +72,19 @@ cp .env.example .env
 ### CLI Mode
 
 Basic usage:
+
 ```bash
 python -m src.main PROJ-123
 ```
 
 With verbose logging:
+
 ```bash
 python -m src.main PROJ-123 --verbose
 ```
 
 JSON output:
+
 ```bash
 python -m src.main PROJ-123 --json
 ```
@@ -88,6 +94,7 @@ python -m src.main PROJ-123 --json
 The Lambda handler expects an event with a `jira_key` parameter:
 
 **Direct invocation:**
+
 ```json
 {
   "jira_key": "PROJ-123"
@@ -95,6 +102,7 @@ The Lambda handler expects an event with a `jira_key` parameter:
 ```
 
 **API Gateway:**
+
 ```json
 {
   "body": "{\"jira_key\": \"PROJ-123\"}"
@@ -104,6 +112,7 @@ The Lambda handler expects an event with a `jira_key` parameter:
 #### Deploying to AWS Lambda
 
 1. Package the application:
+
 ```bash
 pip install -r requirements.txt -t package/
 cp -r src package/
@@ -127,18 +136,17 @@ The application is configured through a combination of `mcp_config.json` and a `
 
 The following variables must be defined in your `.env` file:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | Your OpenAI API key. |
-| `GITHUB_TOKEN` | Yes | Your GitHub personal access token. |
-| `GITHUB_ORG`| Yes | The GitHub organization to create issues in. |
-| `GITHUB_ASSIGNEE`| No | The GitHub username to assign issues to. |
-| `JIRA_URL` | Yes | The URL of your Jira instance. |
-| `JIRA_USERNAME` | Yes | Your Jira username or email. |
-| `JIRA_API_TOKEN` | Yes | Your Jira API token. |
-| `MAX_ITERATIONS` | No | Max agent iterations (default: 15) |
-| `LOG_LEVEL` | No | Logging level (default: INFO) |
-
+| Variable          | Required | Description                                  |
+| ----------------- | -------- | -------------------------------------------- |
+| `OPENAI_API_KEY`  | Yes      | Your OpenAI API key.                         |
+| `GITHUB_TOKEN`    | Yes      | Your GitHub personal access token.           |
+| `GITHUB_ORG`      | Yes      | The GitHub organization to create issues in. |
+| `GITHUB_ASSIGNEE` | No       | The GitHub username to assign issues to.     |
+| `JIRA_URL`        | Yes      | The URL of your Jira instance.               |
+| `JIRA_USERNAME`   | Yes      | Your Jira username or email.                 |
+| `JIRA_API_TOKEN`  | Yes      | Your Jira API token.                         |
+| `MAX_ITERATIONS`  | No       | Max agent iterations (default: 15)           |
+| `LOG_LEVEL`       | No       | Logging level (default: INFO)                |
 
 ## Development
 
@@ -157,6 +165,7 @@ pytest tests/ -v
 ```
 
 With coverage:
+
 ```bash
 pytest tests/ --cov=src --cov-report=html
 ```

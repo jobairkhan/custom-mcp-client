@@ -7,6 +7,7 @@ The Apprentice MCP Agent is an intelligent automation tool that uses AI (via Ope
 ## Quick Setup (5 minutes)
 
 ### 1. Prerequisites
+
 - Python 3.13 or higher
 - Node.js 18+ (for MCP servers)
 - OpenAI API key
@@ -99,16 +100,18 @@ User Command (CLI/Lambda)
 ✅ **Intelligent Reasoning** - LangGraph ReAct pattern for smart decision-making  
 ✅ **Dual Interface** - CLI for local use, Lambda for cloud deployment  
 ✅ **Type-Safe Config** - Pydantic-based settings management  
-✅ **Comprehensive Tests** - 29 passing tests with pytest  
+✅ **Comprehensive Tests** - 29 passing tests with pytest
 
 ## Common Use Cases
 
 ### Migrate a Single Issue
+
 ```bash
 python -m src.main PROJ-123
 ```
 
 ### Batch Migration (shell script)
+
 ```bash
 #!/bin/bash
 for issue in PROJ-123 PROJ-124 PROJ-125; do
@@ -130,18 +133,22 @@ Deploy as a Lambda function to create an API endpoint for issue migration:
 ## Troubleshooting
 
 ### "No MCP servers configured"
+
 - Check that `MCP_SERVERS` is set in your `.env` file
 - Ensure the JSON is valid (use a JSON validator)
 
 ### "No tools loaded from MCP servers"
+
 - Make sure Node.js is installed and accessible
 - Test MCP servers manually: `npx -y @modelcontextprotocol/server-jira`
 
 ### "OpenAI API error"
+
 - Verify your `OPENAI_API_KEY` is valid
 - Check your API quota and billing
 
 ### Connection errors
+
 - Verify your Jira/GitHub credentials
 - Check network connectivity
 - Ensure API tokens have the correct permissions
