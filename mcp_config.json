@@ -1,7 +1,7 @@
 {
   "jira": {
     "command": "npx",
-    "args": ["-y", "@modelcontextprotocol/server-jira"],
+    "args": ["-y", "@ecubelabs/atlassian-mcp"],
     "transport": "stdio",
     "env": {
       "JIRA_URL": "${JIRA_URL}",
